@@ -1,6 +1,6 @@
 apply from: 'http://mirrors.taobao.net/mirror/gradle/android-parent.gradle'
 group = 'com.taobao.android'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.2-SNAPSHOT'
 
 description = """weex_inspector"""
 
