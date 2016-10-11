@@ -256,6 +256,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class WXDomStatement {
   /** package **/ final ConcurrentHashMap<String, WXDomObject> mRegistry;
+  private WXDomObject.Consumer mAddDOMConsumer;
   private String mInstanceId;
   private WXRenderManager mWXRenderManager;
   private ArrayList<IWXRenderTask> mNormalTasks;
@@ -282,6 +283,7 @@ class WXDomStatement {
     mNormalTasks = new ArrayList<>();
     animations = new HashSet<>();
     mWXRenderManager = renderManager;
+    mAddDOMConsumer = new AddDOMConsumer(mRegistry);
   }
 
   /**
@@ -290,6 +292,12 @@ class WXDomStatement {
   public void destroy() {
     mDestroy = true;
     mRegistry.clear();
+    mAddDOMConsumer = null;
+    mNormalTasks.clear();
+    mAddDom.clear();
+    mLayoutContext = null;
+    mWXRenderManager = null;
+    animations.clear();
   }
 
   /**
@@ -298,7 +306,7 @@ class WXDomStatement {
    * This method will be called when {@link #batch()} is executed.
    * @param root root dom
    */
-  void rebuildingDomTree(WXDomObject root) {
+  void rebuildingFixedDomTree(WXDomObject root) {
     if (root != null && root.getFixedStyleRefs() != null) {
       int size = root.getFixedStyleRefs().size();
       for (int i = 0; i < size; i++) {
@@ -340,7 +348,7 @@ class WXDomStatement {
     }
     long start0 = System.currentTimeMillis();
 
-    rebuildingDomTree(rootDom);
+    rebuildingFixedDomTree(rootDom);
 
     rootDom.traverseTree( new WXDomObject.Consumer() {
       @Override
@@ -582,23 +590,9 @@ class WXDomStatement {
     }
 
     domObject.traverseTree(
-        new ApplyStyleConsumer(), new WXDomObject.Consumer() {
-      @Override
-      public void accept(WXDomObject dom) {
-        //find fixed node
-        WXDomObject rootDom = mRegistry.get(WXDomObject.ROOT);
-        if (rootDom != null) {
-          rootDom.add2FixedDomList(dom.getRef());
-        }
-      }
-    }, new WXDomObject.Consumer() {
-      @Override
-      public void accept(WXDomObject dom) {
-        //register dom
-          dom.young();
-          mRegistry.put(dom.getRef(), dom);
-      }
-    });
+        mAddDOMConsumer,
+        ApplyStyleConsumer.getInstance()
+        );
 
     //Create component in dom thread
     WXComponent component = isRoot ?
@@ -840,7 +834,7 @@ class WXDomStatement {
 
     if(!style.isEmpty()){
       domObject.updateStyle(style);
-      domObject.traverseTree(new ApplyStyleConsumer());
+      domObject.traverseTree(ApplyStyleConsumer.getInstance());
       updateStyle(domObject, style);
     }
     mDirty = true;
@@ -1162,7 +1156,38 @@ class WXDomStatement {
     return null;
   }
 
+
+  private static class AddDOMConsumer implements WXDomObject.Consumer {
+    final ConcurrentHashMap<String, WXDomObject> mRegistry;
+    AddDOMConsumer(ConcurrentHashMap<String, WXDomObject> r){
+      mRegistry = r;
+    }
+
+    @Override
+    public void accept(WXDomObject dom) {
+      //register dom
+      dom.young();
+      mRegistry.put(dom.getRef(), dom);
+
+      //find fixed node
+      WXDomObject rootDom = mRegistry.get(WXDomObject.ROOT);
+      if (rootDom != null && dom.isFixed()) {
+        rootDom.add2FixedDomList(dom.getRef());
+      }
+    }
+  }
+
   static class ApplyStyleConsumer implements WXDomObject.Consumer {
+    static ApplyStyleConsumer sInstance;
+
+    public static ApplyStyleConsumer getInstance(){
+      if(sInstance == null){
+        sInstance = new ApplyStyleConsumer();
+      }
+      return sInstance;
+    }
+
+    private ApplyStyleConsumer(){};
 
     @Override
     public void accept(WXDomObject dom) {
