@@ -220,6 +220,8 @@ import com.taobao.weex.ui.view.WXFrameLayout;
 import com.taobao.weex.utils.WXResourceUtils;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * div component
@@ -282,11 +284,25 @@ public class WXDiv extends WXVContainer<WXFrameLayout> {
   }
 
   private void notifyShowUnderlay() {
-    getInstance().fireEvent(getRef(), Constants.Event.SHOW_UNDERLAY);
+    Map<String, Object> params = new HashMap<>();
+    int[] location = new int[2];
+    getHostView().getLocationOnScreen(location);
+    params.put("x", location[0]);
+    params.put("y", location[1]);
+    params.put("width", getDomObject().getCSSLayoutWidth());
+    params.put("height", getDomObject().getCSSLayoutHeight());
+    getInstance().fireEvent(getRef(), Constants.Event.SHOW_UNDERLAY, params);
   }
 
   private void notifyHideUnderlay() {
-    getInstance().fireEvent(getRef(), Constants.Event.HIDE_UNDERLAY);
+    Map<String, Object> params = new HashMap<>();
+    int[] location = new int[2];
+    getHostView().getLocationOnScreen(location);
+    params.put("x", location[0]);
+    params.put("y", location[1]);
+    params.put("width", getDomObject().getCSSLayoutWidth());
+    params.put("height", getDomObject().getCSSLayoutHeight());
+    getInstance().fireEvent(getRef(), Constants.Event.HIDE_UNDERLAY, params);
   }
 
   @Override
