@@ -218,6 +218,7 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
   private List<OnClickListener> mHostClickListeners;
   private List<OnFocusChangeListener> mFocusChangeListeners;
   private String mCurrentRef;
+  private String mBackgroundColor = null;
 
   private OnClickListener mClickEventListener = new OnClickListener() {
     @Override
@@ -601,6 +602,7 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
         return true;
       case Constants.Name.BACKGROUND_COLOR:
         String bgColor = WXUtils.getString(param,null);
+        mBackgroundColor = bgColor;
         if (bgColor != null)
           setBackgroundColor(bgColor);
         return true;
@@ -940,6 +942,10 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
           getOrCreateBorder().setColor(colorInt);
       }
     }
+  }
+
+  public String getBackgroundColor() {
+    return mBackgroundColor;
   }
 
   public void setOpacity(float opacity) {

@@ -318,6 +318,8 @@ public class Constants {
     String INTERVAL = "interval";
     String PLAY_STATUS = "playStatus";
     String FONT_FACE = "fontFace";
+    String UNDERLAY_COLOR = "underlayColor";
+    String ACTIVE_OPACITY = "activeOpacity";
   }
 
   public interface Value {
@@ -372,6 +374,8 @@ public class Constants {
     String ONLOAD = "load";
     String CHANGE = "change";
     String ONPULLING_DOWN = "pullingdown";
+    String SHOW_UNDERLAY = "showunderlay";
+    String HIDE_UNDERLAY = "hideunderlay";
   }
 
   public interface Scheme{
