@@ -312,7 +312,7 @@ class WXRenderStatement {
       return null;
     }
     FrameLayout frameLayout = (FrameLayout) mGodComponent.getHostView();
-    ViewGroup.LayoutParams layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    ViewGroup.LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
     frameLayout.setLayoutParams(layoutParams);
     frameLayout.setBackgroundColor(Color.TRANSPARENT);
 

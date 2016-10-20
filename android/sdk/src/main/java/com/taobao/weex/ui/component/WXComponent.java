@@ -438,6 +438,15 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
       return;
     }
 
+    if (WXDomObject.ROOT.equals(getDomObject().getRef())) {
+      FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+              ViewGroup.LayoutParams.MATCH_PARENT,
+              ViewGroup.LayoutParams.MATCH_PARENT);
+      params.setMargins(realLeft,realTop,realRight,realBottom);
+      mHost.setLayoutParams(params);
+      return;
+    }
+
     MeasureOutput measureOutput = measure(realWidth, realHeight);
     realWidth = measureOutput.width;
     realHeight = measureOutput.height;
