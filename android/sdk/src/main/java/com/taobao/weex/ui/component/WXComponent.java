@@ -134,9 +134,11 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -218,7 +220,10 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
   private List<OnClickListener> mHostClickListeners;
   private List<OnFocusChangeListener> mFocusChangeListeners;
   private String mCurrentRef;
-  private String mBackgroundColor = null;
+  private int mBackgroundColor = Color.TRANSPARENT;
+  private int mUnderlayColor = Color.TRANSPARENT;
+  private float mActiveOpacity = 1f;
+  private boolean isUnderlayShowing = false;
 
   private OnClickListener mClickEventListener = new OnClickListener() {
     @Override
@@ -602,7 +607,6 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
         return true;
       case Constants.Name.BACKGROUND_COLOR:
         String bgColor = WXUtils.getString(param,null);
-        mBackgroundColor = bgColor;
         if (bgColor != null)
           setBackgroundColor(bgColor);
         return true;
@@ -678,6 +682,12 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
       case Constants.Name.TOP:
       case Constants.Name.RIGHT:
       case Constants.Name.BOTTOM:
+        return true;
+      case Constants.Name.UNDERLAY_COLOR:
+        setUnderlayColor(String.valueOf(param));
+        return true;
+      case Constants.Name.ACTIVE_OPACITY:
+        setActiveOpacity(String.valueOf(param));
         return true;
       default:
         return false;
@@ -833,7 +843,72 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
   /**
    * After view init.
    */
-  protected void onHostViewInitialized(T host){}
+  protected void onHostViewInitialized(final T host){
+    host.setOnTouchListener(new View.OnTouchListener() {
+      @Override
+      public boolean onTouch(View v, MotionEvent event) {
+        switch (event.getAction()) {
+          case MotionEvent.ACTION_DOWN:
+            if (!isUnderlayShowing) {
+              if ((mUnderlayColor != mBackgroundColor) || mActiveOpacity != 1f) {
+                if (mUnderlayColor != mBackgroundColor) {
+                  host.setBackgroundColor(mUnderlayColor);
+                }
+                if (mActiveOpacity != 1f) {
+                  host.setAlpha(mActiveOpacity);
+                }
+                notifyShowUnderlay();
+                return !willConsumeEvent(host);
+              }
+            }
+            break;
+          case MotionEvent.ACTION_CANCEL:
+          case MotionEvent.ACTION_UP:
+            if (isUnderlayShowing) {
+              if (mBackgroundColor != mUnderlayColor || mActiveOpacity != 1f) {
+                if (mBackgroundColor != mUnderlayColor) {
+                  host.setBackgroundColor(mBackgroundColor);
+                }
+                if (mActiveOpacity != 1f) {
+                  host.setAlpha(1f);
+                }
+                notifyHideUnderlay();
+              }
+            }
+            break;
+        }
+        return false;
+      }
+    });
+  }
+
+  private boolean willConsumeEvent(View view) {
+    return ViewCompat.hasOnClickListeners(view) || wxGesture != null;
+  }
+
+  private void notifyShowUnderlay() {
+    Map<String, Object> params = new HashMap<>();
+    int[] location = new int[2];
+    getHostView().getLocationOnScreen(location);
+    params.put("x", location[0]);
+    params.put("y", location[1]);
+    params.put("width", getDomObject().getCSSLayoutWidth());
+    params.put("height", getDomObject().getCSSLayoutHeight());
+    getInstance().fireEvent(getRef(), Constants.Event.SHOW_UNDERLAY, params);
+    isUnderlayShowing = true;
+  }
+
+  private void notifyHideUnderlay() {
+    Map<String, Object> params = new HashMap<>();
+    int[] location = new int[2];
+    getHostView().getLocationOnScreen(location);
+    params.put("x", location[0]);
+    params.put("y", location[1]);
+    params.put("width", getDomObject().getCSSLayoutWidth());
+    params.put("height", getDomObject().getCSSLayoutHeight());
+    getInstance().fireEvent(getRef(), Constants.Event.HIDE_UNDERLAY, params);
+    isUnderlayShowing = false;
+  }
 
   public T getHostView() {
     return mHost;
@@ -937,15 +1012,12 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
 
   public void setBackgroundColor(String color) {
     if (!TextUtils.isEmpty(color)&& mHost!=null) {
-      int colorInt = WXResourceUtils.getColor(color);
+      int colorInt = WXResourceUtils.getColor(color, Color.TRANSPARENT);
       if (!(colorInt == Color.TRANSPARENT && mBackgroundDrawable == null)){
-          getOrCreateBorder().setColor(colorInt);
+        getOrCreateBorder().setColor(colorInt);
+        mBackgroundColor = colorInt;
       }
     }
-  }
-
-  public String getBackgroundColor() {
-    return mBackgroundColor;
   }
 
   public void setOpacity(float opacity) {
@@ -1064,6 +1136,18 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
       } else if (TextUtils.equals(visibility, Constants.Value.HIDDEN)) {
         view.setVisibility(View.GONE);
       }
+    }
+  }
+
+  private void setUnderlayColor(String colorString) {
+    this.mUnderlayColor = WXResourceUtils.getColor(colorString, Color.TRANSPARENT);
+  }
+
+  private void setActiveOpacity(String opacityString) {
+    try {
+      this.mActiveOpacity = Float.parseFloat(opacityString);
+    } catch (NumberFormatException e) {
+      this.mActiveOpacity = 1f;
     }
   }
 
