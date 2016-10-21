@@ -134,7 +134,6 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -858,7 +857,7 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
                   host.setAlpha(mActiveOpacity);
                 }
                 notifyShowUnderlay();
-                return !willConsumeEvent(host);
+                return !willConsumeEvent();
               }
             }
             break;
@@ -882,8 +881,8 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
     });
   }
 
-  private boolean willConsumeEvent(View view) {
-    return ViewCompat.hasOnClickListeners(view) || wxGesture != null;
+  private boolean willConsumeEvent() {
+    return (mHostClickListeners != null && mHostClickListeners.size() > 0) || wxGesture != null;
   }
 
   private void notifyShowUnderlay() {
