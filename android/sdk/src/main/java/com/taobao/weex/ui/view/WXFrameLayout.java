@@ -205,7 +205,6 @@
 package com.taobao.weex.ui.view;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
@@ -231,7 +230,6 @@ public class WXFrameLayout extends FrameLayout implements WXGestureObservable {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    Log.e("xxx",event.toString());
     boolean result = super.onTouchEvent(event);
     if (wxGesture != null) {
       result |= wxGesture.onTouch(this, event);
