@@ -214,7 +214,6 @@ import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.util.TypedValue;
 import android.view.Gravity;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -253,22 +252,23 @@ public abstract class AbstractEditComponent extends WXComponent<WXEditText> {
   protected WXEditText initComponentHostView(@NonNull Context context) {
     final WXEditText inputView = new WXEditText(context);
     appleStyleAfterCreated(inputView);
+    return inputView;
+  }
 
-    inputView.setOnClickListener(new View.OnClickListener() {
+  private void applyOnClickListener() {
+    addClickListener(new OnClickListener() {
       @Override
-      public void onClick(View v) {
+      public void onHostViewClick() {
         switch (mType) {
           case Constants.Value.DATE:
-            WXTimeInputHelper.pickDate(mMax, mMin, inputView);
+            WXTimeInputHelper.pickDate(mMax, mMin, getHostView());
             break;
           case Constants.Value.TIME:
-            WXTimeInputHelper.pickTime(inputView);
+            WXTimeInputHelper.pickTime(getHostView());
             break;
         }
       }
     });
-
-    return inputView;
   }
 
   /**
@@ -446,6 +446,12 @@ public abstract class AbstractEditComponent extends WXComponent<WXEditText> {
     }
     mType = type;
     ((EditText) getHostView()).setRawInputType(getInputType(mType));
+    switch (mType) {
+      case Constants.Value.DATE:
+      case Constants.Value.TIME:
+        applyOnClickListener();
+        break;
+    }
   }
 
   @WXComponentProp(name = Constants.Name.AUTOFOCUS)
