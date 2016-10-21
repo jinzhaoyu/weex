@@ -205,32 +205,21 @@
 package com.taobao.weex.ui.component;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.annotation.NonNull;
-import android.support.v4.view.ViewCompat;
-import android.view.MotionEvent;
-import android.view.View;
 
 import com.taobao.weex.WXSDKInstance;
 import com.taobao.weex.common.Component;
-import com.taobao.weex.common.Constants;
 import com.taobao.weex.dom.WXDomObject;
 import com.taobao.weex.ui.ComponentCreator;
 import com.taobao.weex.ui.view.WXFrameLayout;
-import com.taobao.weex.utils.WXResourceUtils;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * div component
  */
 @Component(lazyload = false)
 public class WXDiv extends WXVContainer<WXFrameLayout> {
-
-  private String mUnderlayColor = null;
-  private float mActiveOpacity = 1;
 
   public static class Ceator implements ComponentCreator {
     public WXComponent createInstance(WXSDKInstance instance, WXDomObject node, WXVContainer parent, boolean lazy) throws IllegalAccessException, InvocationTargetException, InstantiationException {
@@ -249,84 +238,6 @@ public class WXDiv extends WXVContainer<WXFrameLayout> {
 
   @Override
   protected WXFrameLayout initComponentHostView(@NonNull final Context context) {
-    final WXFrameLayout hostView = new WXFrameLayout(context);
-    hostView.setOnTouchListener(new View.OnTouchListener() {
-      @Override
-      public boolean onTouch(View v, MotionEvent event) {
-        switch (event.getAction()) {
-          case MotionEvent.ACTION_DOWN:
-            if (mUnderlayColor != null || mActiveOpacity != 1f) {
-              if (mUnderlayColor != null) {
-                hostView.setBackgroundColor(WXResourceUtils.getColor(mUnderlayColor, Color.TRANSPARENT));
-              }
-              if (mActiveOpacity != 1f) {
-                hostView.setAlpha(mActiveOpacity);
-              }
-              notifyShowUnderlay();
-              return !ViewCompat.hasOnClickListeners(hostView);
-            }
-            break;
-          case MotionEvent.ACTION_CANCEL:
-          case MotionEvent.ACTION_UP:
-            if (getBackgroundColor() == null) {
-              hostView.setBackgroundColor(Color.TRANSPARENT);
-            } else {
-              hostView.setBackgroundColor(WXResourceUtils.getColor(getBackgroundColor(), Color.TRANSPARENT));
-            }
-            hostView.setAlpha(1f);
-            notifyHideUnderlay();
-            break;
-        }
-        return false;
-      }
-    });
-    return hostView;
-  }
-
-  private void notifyShowUnderlay() {
-    Map<String, Object> params = new HashMap<>();
-    int[] location = new int[2];
-    getHostView().getLocationOnScreen(location);
-    params.put("x", location[0]);
-    params.put("y", location[1]);
-    params.put("width", getDomObject().getCSSLayoutWidth());
-    params.put("height", getDomObject().getCSSLayoutHeight());
-    getInstance().fireEvent(getRef(), Constants.Event.SHOW_UNDERLAY, params);
-  }
-
-  private void notifyHideUnderlay() {
-    Map<String, Object> params = new HashMap<>();
-    int[] location = new int[2];
-    getHostView().getLocationOnScreen(location);
-    params.put("x", location[0]);
-    params.put("y", location[1]);
-    params.put("width", getDomObject().getCSSLayoutWidth());
-    params.put("height", getDomObject().getCSSLayoutHeight());
-    getInstance().fireEvent(getRef(), Constants.Event.HIDE_UNDERLAY, params);
-  }
-
-  @Override
-  protected boolean setProperty(String key, Object param) {
-    switch (key) {
-      case Constants.Name.UNDERLAY_COLOR:
-        setUnderlayColor(String.valueOf(param));
-        return true;
-      case Constants.Name.ACTIVE_OPACITY:
-        setActiveOpacity(String.valueOf(param));
-        return true;
-    }
-    return super.setProperty(key, param);
-  }
-
-  private void setUnderlayColor(String colorString) {
-    this.mUnderlayColor = colorString;
-  }
-
-  private void setActiveOpacity(String opacityString) {
-    try {
-      this.mActiveOpacity = Float.parseFloat(opacityString);
-    } catch (NumberFormatException e) {
-      this.mActiveOpacity = 1f;
-    }
+    return new WXFrameLayout(context);
   }
 }
