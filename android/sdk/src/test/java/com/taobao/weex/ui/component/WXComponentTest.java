@@ -206,15 +206,13 @@ package com.taobao.weex.ui.component;
 
 import com.taobao.weappplus_sdk.BuildConfig;
 import com.taobao.weex.common.Constants;
-import com.taobao.weex.ui.view.border.BorderDrawable;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by sospartan on 7/27/16.
@@ -247,6 +245,10 @@ public class WXComponentTest {
     component.setProperty(Constants.Name.BORDER_COLOR, "#ff0000");
     component.setProperty(Constants.Name.VISIBILITY,null);
     component.setProperty(Constants.Name.VISIBILITY, Constants.Value.VISIBLE);
+    component.setProperty(Constants.Name.ACTIVE_OPACITY, null);
+    component.setProperty(Constants.Name.ACTIVE_OPACITY, "0.5");
+    component.setProperty(Constants.Name.UNDERLAY_COLOR, null);
+    component.setProperty(Constants.Name.UNDERLAY_COLOR, "#00ff00");
   }
 
 
