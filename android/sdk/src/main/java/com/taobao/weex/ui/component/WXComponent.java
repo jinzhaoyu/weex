@@ -223,6 +223,7 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
   private int mUnderlayColor = Color.TRANSPARENT;
   private float mActiveOpacity = 1f;
   private boolean isUnderlayShowing = false;
+  private View.OnTouchListener mHighlighterTouchListener = null;
 
   private OnClickListener mClickEventListener = new OnClickListener() {
     @Override
@@ -843,42 +844,56 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
    * After view init.
    */
   protected void onHostViewInitialized(final T host){
-    host.setOnTouchListener(new View.OnTouchListener() {
-      @Override
-      public boolean onTouch(View v, MotionEvent event) {
-        switch (event.getAction()) {
-          case MotionEvent.ACTION_DOWN:
-            if (!isUnderlayShowing) {
-              if ((mUnderlayColor != mBackgroundColor) || mActiveOpacity != 1f) {
-                if (mUnderlayColor != mBackgroundColor) {
-                  host.setBackgroundColor(mUnderlayColor);
+
+  }
+
+  private void applyHighlighterTouchListener(final T host) {
+    if (hasHighlighter()) {
+      if (mHighlighterTouchListener == null) {
+        mHighlighterTouchListener = new View.OnTouchListener() {
+          @Override
+          public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getAction()) {
+              case MotionEvent.ACTION_DOWN:
+                if (!isUnderlayShowing) {
+                  if ((mUnderlayColor != mBackgroundColor) || mActiveOpacity != 1f) {
+                    if (mUnderlayColor != mBackgroundColor) {
+                      host.setBackgroundColor(mUnderlayColor);
+                    }
+                    if (mActiveOpacity != 1f) {
+                      host.setAlpha(mActiveOpacity);
+                    }
+                    notifyShowUnderlay();
+                    return !willConsumeEvent();
+                  }
                 }
-                if (mActiveOpacity != 1f) {
-                  host.setAlpha(mActiveOpacity);
+                break;
+              case MotionEvent.ACTION_CANCEL:
+              case MotionEvent.ACTION_UP:
+                if (isUnderlayShowing) {
+                  if (mBackgroundColor != mUnderlayColor || mActiveOpacity != 1f) {
+                    if (mBackgroundColor != mUnderlayColor) {
+                      host.setBackgroundColor(mBackgroundColor);
+                    }
+                    if (mActiveOpacity != 1f) {
+                      host.setAlpha(1f);
+                    }
+                    notifyHideUnderlay();
+                  }
                 }
-                notifyShowUnderlay();
-                return !willConsumeEvent();
-              }
+                break;
             }
-            break;
-          case MotionEvent.ACTION_CANCEL:
-          case MotionEvent.ACTION_UP:
-            if (isUnderlayShowing) {
-              if (mBackgroundColor != mUnderlayColor || mActiveOpacity != 1f) {
-                if (mBackgroundColor != mUnderlayColor) {
-                  host.setBackgroundColor(mBackgroundColor);
-                }
-                if (mActiveOpacity != 1f) {
-                  host.setAlpha(1f);
-                }
-                notifyHideUnderlay();
-              }
-            }
-            break;
-        }
-        return false;
+            return false;
+          }
+        };
+
+        host.setOnTouchListener(mHighlighterTouchListener);
       }
-    });
+    }
+  }
+
+  private boolean hasHighlighter() {
+    return mBackgroundColor != Color.TRANSPARENT || mActiveOpacity != 1f;
   }
 
   private boolean willConsumeEvent() {
@@ -886,18 +901,16 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
   }
 
   private void notifyShowUnderlay() {
-    Map<String, Object> params = new HashMap<>();
-    int[] location = new int[2];
-    getHostView().getLocationOnScreen(location);
-    params.put("x", location[0]);
-    params.put("y", location[1]);
-    params.put("width", getDomObject().getCSSLayoutWidth());
-    params.put("height", getDomObject().getCSSLayoutHeight());
-    getInstance().fireEvent(getRef(), Constants.Event.SHOW_UNDERLAY, params);
+    getInstance().fireEvent(getRef(), Constants.Event.SHOW_UNDERLAY, obtainTouchEvent());
     isUnderlayShowing = true;
   }
 
   private void notifyHideUnderlay() {
+    getInstance().fireEvent(getRef(), Constants.Event.HIDE_UNDERLAY, obtainTouchEvent());
+    isUnderlayShowing = false;
+  }
+
+  private Map<String, Object> obtainTouchEvent() {
     Map<String, Object> params = new HashMap<>();
     int[] location = new int[2];
     getHostView().getLocationOnScreen(location);
@@ -905,8 +918,7 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
     params.put("y", location[1]);
     params.put("width", getDomObject().getCSSLayoutWidth());
     params.put("height", getDomObject().getCSSLayoutHeight());
-    getInstance().fireEvent(getRef(), Constants.Event.HIDE_UNDERLAY, params);
-    isUnderlayShowing = false;
+    return params;
   }
 
   public T getHostView() {
@@ -1140,11 +1152,15 @@ public abstract class  WXComponent<T extends View> implements IWXObject, IWXActi
 
   private void setUnderlayColor(String colorString) {
     this.mUnderlayColor = WXResourceUtils.getColor(colorString, Color.TRANSPARENT);
+    if (mUnderlayColor != Color.TRANSPARENT) {
+      applyHighlighterTouchListener(getHostView());
+    }
   }
 
   private void setActiveOpacity(String opacityString) {
     try {
       this.mActiveOpacity = Float.parseFloat(opacityString);
+      applyHighlighterTouchListener(getHostView());
     } catch (NumberFormatException e) {
       this.mActiveOpacity = 1f;
     }
