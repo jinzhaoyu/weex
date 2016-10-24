@@ -221,6 +221,10 @@ import java.util.Locale;
  */
 
 public class WXTimeInputHelper {
+
+    private static SimpleDateFormat timeFormatter;
+    private static SimpleDateFormat dateFormatter;
+
     public static void pickDate(String max, String min, final TextView target) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(parseDate(target.getText().toString()));
@@ -271,9 +275,12 @@ public class WXTimeInputHelper {
     }
 
     private static Date parseDate(String s) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        if (dateFormatter == null) {
+            dateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        }
+
         try {
-            return format.parse(s);
+            return dateFormatter.parse(s);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -281,9 +288,12 @@ public class WXTimeInputHelper {
     }
 
     private static Date parseTime(String s) {
-        SimpleDateFormat format = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        if (timeFormatter == null) {
+            timeFormatter = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        }
+
         try {
-            return format.parse(s);
+            return timeFormatter.parse(s);
         } catch (ParseException e) {
             e.printStackTrace();
         }
