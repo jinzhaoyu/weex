@@ -217,10 +217,6 @@ import java.util.List;
 public class WXCirclePageAdapter extends PagerAdapter {
 
   /**
-   * Number of sub item
-   */
-  private int realCount;
-  /**
    * Subviews
    */
   private List<View> views = new ArrayList<>();
@@ -271,9 +267,7 @@ public class WXCirclePageAdapter extends PagerAdapter {
 
   @Override
   public int getCount() {
-    // if count less than 3,the circle doesn't work as expected.
     return shadow.size();
-
   }
 
   public int getRealCount() {
