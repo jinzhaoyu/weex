@@ -210,7 +210,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
-import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -227,7 +226,7 @@ public class WXBaseCircleIndicator extends FrameLayout implements OnPageChangeLi
   private final Paint mPaintStroke = new Paint();
   private final Paint mPaintFill = new Paint();
   private WXGesture wxGesture;
-  private ViewPager mCircleViewPager;
+  private WXCircleViewPager mCircleViewPager;
 
   /**
    * Radius of the circle
@@ -300,14 +299,14 @@ public class WXBaseCircleIndicator extends FrameLayout implements OnPageChangeLi
   /**
    * @return the mCircleViewPager
    */
-  public ViewPager getCircleViewPager() {
+  public WXCircleViewPager getCircleViewPager() {
     return mCircleViewPager;
   }
 
   /**
    * @param mCircleViewPager the mCircleViewPager to set
    */
-  public void setCircleViewPager(ViewPager mCircleViewPager) {
+  public void setCircleViewPager(WXCircleViewPager mCircleViewPager) {
     this.mCircleViewPager = mCircleViewPager;
     if (this.mCircleViewPager != null) {
       this.mCircleViewPager.setOnPageChangeListener(this);
@@ -501,6 +500,6 @@ public class WXBaseCircleIndicator extends FrameLayout implements OnPageChangeLi
     if (mCircleViewPager == null || mCircleViewPager.getAdapter() == null) {
       return 0;
     }
-    return ((LoopPagerAdapter)mCircleViewPager.getAdapter()).getRealCount();
+    return mCircleViewPager.getRealCount();
   }
 }

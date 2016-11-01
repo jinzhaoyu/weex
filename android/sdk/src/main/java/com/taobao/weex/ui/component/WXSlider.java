@@ -221,9 +221,9 @@ import com.taobao.weex.common.Constants;
 import com.taobao.weex.dom.WXDomObject;
 import com.taobao.weex.dom.WXEvent;
 import com.taobao.weex.ui.ComponentCreator;
-import com.taobao.weex.ui.view.LoopPagerAdapter;
-import com.taobao.weex.ui.view.LoopViewPager;
 import com.taobao.weex.ui.view.WXCircleIndicator;
+import com.taobao.weex.ui.view.WXCirclePageAdapter;
+import com.taobao.weex.ui.view.WXCircleViewPager;
 import com.taobao.weex.utils.WXLogUtils;
 import com.taobao.weex.utils.WXUtils;
 import com.taobao.weex.utils.WXViewUtils;
@@ -247,7 +247,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
   /**
    * Scrollable sliderview
    */
-  /** package **/ LoopViewPager mViewPager;
+  /** package **/ WXCircleViewPager mViewPager;
   /**
    * Circle indicator
    */
@@ -256,7 +256,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
   /**
    * Adapter for sliderview
    */
-  protected LoopPagerAdapter mAdapter;
+  protected WXCirclePageAdapter mAdapter;
 
   protected boolean mShowIndicators;
 
@@ -277,11 +277,11 @@ public class WXSlider extends WXVContainer<FrameLayout> {
     // init view pager
     FrameLayout.LayoutParams pagerParams = new FrameLayout.LayoutParams(
          LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-    mViewPager = new LoopViewPager(context);
+    mViewPager = new WXCircleViewPager(context);
     mViewPager.setLayoutParams(pagerParams);
 
     // init adapter
-    mAdapter = new LoopPagerAdapter();
+    mAdapter = new WXCirclePageAdapter();
     mViewPager.setAdapter(mAdapter);
     // add to parent
     view.addView(mViewPager);
@@ -429,7 +429,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
       return;
     }
 
-    mViewPager.setCurrentItem(i);
+    setIndex(i);
   }
 
   @WXComponentProp(name = Constants.Name.AUTO_PLAY)
@@ -469,12 +469,14 @@ public class WXSlider extends WXVContainer<FrameLayout> {
       if(index >= mAdapter.getRealCount() || index < 0){
         return;
       }
-      index = index % mAdapter.getRealCount();
+      index = index + mAdapter.getFirst();
       mViewPager.setCurrentItem(index);
     }
   }
 
   protected class SliderPageChangeListener implements OnPageChangeListener {
+
+    private int lastPos = -1;
 
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -483,6 +485,9 @@ public class WXSlider extends WXVContainer<FrameLayout> {
 
     @Override
     public void onPageSelected(int pos) {
+      if (pos == lastPos) {
+        return;
+      }
       if (WXEnvironment.isApkDebugable()) {
         WXLogUtils.d("onPageSelected >>>>" + pos);
       }
@@ -490,7 +495,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
         return;
       }
 
-      int realPosition = pos % mAdapter.getRealCount();
+      int realPosition = mAdapter.getRealPosition(pos);
       if (mChildren == null || realPosition >= mChildren.size()) {
         return;
       }
@@ -513,6 +518,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
 
       mViewPager.requestLayout();
       getHostView().invalidate();
+      lastPos = pos;
     }
 
     @Override
