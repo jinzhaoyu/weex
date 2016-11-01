@@ -485,7 +485,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
 
     @Override
     public void onPageSelected(int pos) {
-      if (pos == lastPos) {
+      if (mAdapter.getRealPosition(pos) == lastPos) {
         return;
       }
       if (WXEnvironment.isApkDebugable()) {
@@ -518,7 +518,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
 
       mViewPager.requestLayout();
       getHostView().invalidate();
-      lastPos = pos;
+      lastPos = mAdapter.getRealPosition(pos);
     }
 
     @Override
