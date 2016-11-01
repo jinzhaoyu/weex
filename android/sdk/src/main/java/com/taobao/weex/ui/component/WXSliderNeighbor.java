@@ -215,9 +215,9 @@ import android.widget.FrameLayout;
 import com.taobao.weex.WXSDKInstance;
 import com.taobao.weex.dom.WXDomObject;
 import com.taobao.weex.ui.ComponentCreator;
+import com.taobao.weex.ui.view.LoopPagerAdapter;
+import com.taobao.weex.ui.view.LoopViewPager;
 import com.taobao.weex.ui.view.WXCircleIndicator;
-import com.taobao.weex.ui.view.WXCirclePageAdapter;
-import com.taobao.weex.ui.view.WXCircleViewPager;
 import com.taobao.weex.utils.WXUtils;
 import com.taobao.weex.utils.WXViewUtils;
 
@@ -276,11 +276,11 @@ public class WXSliderNeighbor extends WXSlider {
         FrameLayout.LayoutParams pagerParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         pagerParams.gravity = Gravity.CENTER;
-        mViewPager = new WXCircleViewPager(mContext);
+        mViewPager = new LoopViewPager(mContext);
         mViewPager.setLayoutParams(pagerParams);
 
         // init adapter
-        mAdapter = new WXCirclePageAdapter();
+        mAdapter = new LoopPagerAdapter();
         mViewPager.setAdapter(mAdapter);
 
         // add to parent

@@ -204,303 +204,180 @@
  */
 package com.taobao.weex.ui.view;
 
-
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Paint.Style;
+import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.widget.FrameLayout;
+import android.view.View;
+import android.view.animation.Interpolator;
 
 import com.taobao.weex.ui.view.gesture.WXGesture;
 import com.taobao.weex.ui.view.gesture.WXGestureObservable;
-import com.taobao.weex.utils.WXViewUtils;
+import com.taobao.weex.utils.WXLogUtils;
 
+import java.lang.reflect.Field;
 
-public class WXBaseCircleIndicator extends FrameLayout implements OnPageChangeListener, WXGestureObservable {
+/**
+ * Created by moxun on 16/11/1.
+ */
 
-  private final Paint mPaintPage = new Paint();
-  private final Paint mPaintStroke = new Paint();
-  private final Paint mPaintFill = new Paint();
-  private WXGesture wxGesture;
-  private ViewPager mCircleViewPager;
+public class LoopViewPager extends ViewPager implements WXGestureObservable {
 
-  /**
-   * Radius of the circle
-   */
-  private float radius;
-  /**
-   * Padding of the circle
-   */
-  private float circlePadding;
-  /**
-   * Fill color of unselected circle
-   */
-  private int pageColor;
-  /**
-   * Fill color of the selected circle
-   */
-  private int fillColor;
-  private int realCurrentItem;
-  private OnPageChangeListener mListener;
+    private WXGesture wxGesture;
+    private boolean mAutoScroll = false;
+    private boolean mLoop = true;
+    private long intervalTime = 3 * 1000;
+    private WXSmoothScroller mScroller;
 
+    private Runnable scrollAction = new Runnable() {
+        @Override
+        public void run() {
+            arrowScroll(FOCUS_FORWARD);
+        }
+    };
 
-  public WXBaseCircleIndicator(Context context) {
-    super(context);
-    getAttrs(context);
-    init();
-  }
-
-  /**
-   * Get attribute of xml
-   */
-  private void getAttrs(Context context) {
-    radius = WXViewUtils.dip2px(5);
-    circlePadding = WXViewUtils.dip2px(5);
-    pageColor = Color.parseColor("#ffffff");
-    //		strokeWidth= WAViewUtils.dip2px((float)1.5);
-    //		strokeColor = Color.parseColor("#FFDDDDDD");
-    fillColor = Color.parseColor("#ffd545");
-  }
-
-  private void init() {
-    mPaintStroke.setAntiAlias(true);
-    mPaintStroke.setStyle(Style.STROKE);
-    //		mPaintStroke.setColor(strokeColor);
-    //		mPaintStroke.setStrokeWidth(strokeWidth);
-
-    mPaintFill.setStyle(Style.FILL);
-    mPaintFill.setAntiAlias(true);
-    mPaintPage.setAntiAlias(true);
-    mPaintPage.setColor(pageColor);
-    mPaintFill.setStyle(Style.FILL);
-    mPaintFill.setColor(fillColor);
-    this.setWillNotDraw(false);
-
-  }
-
-  /**
-   * @param context
-   * @param attrs
-   */
-  public WXBaseCircleIndicator(Context context, AttributeSet attrs) {
-    super(context, attrs);
-    getAttrs(context);
-    init();
-  }
-
-  public void setOnPageChangeListener(OnPageChangeListener listener) {
-    mListener = listener;
-  }
-
-  /**
-   * @return the mCircleViewPager
-   */
-  public ViewPager getCircleViewPager() {
-    return mCircleViewPager;
-  }
-
-  /**
-   * @param mCircleViewPager the mCircleViewPager to set
-   */
-  public void setCircleViewPager(ViewPager mCircleViewPager) {
-    this.mCircleViewPager = mCircleViewPager;
-    if (this.mCircleViewPager != null) {
-      this.mCircleViewPager.setOnPageChangeListener(this);
-    }
-    requestLayout();
-  }
-
-  @Override
-  public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-    if (mListener != null) {
-      mListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
-    }
-  }
-
-  @Override
-  public void onPageSelected(int position) {
-    realCurrentItem = position % getCount();
-    invalidate();
-    if (mListener != null) {
-      mListener.onPageSelected(position);
-    }
-  }
-
-  @Override
-  public void onPageScrollStateChanged(int state) {
-    if (mListener != null) {
-      mListener.onPageScrollStateChanged(state);
-    }
-  }
-
-  /**
-   * @return the radius
-   */
-  public float getRadius() {
-    return radius;
-  }
-
-  /**
-   * @param radius the radius to set
-   */
-  public void setRadius(float radius) {
-    this.radius = radius;
-  }
-
-  /**
-   * @return the circlePadding
-   */
-  public float getCirclePadding() {
-    return circlePadding;
-  }
-
-  /**
-   * @param circlePadding the circlePadding to set
-   */
-  public void setCirclePadding(float circlePadding) {
-    this.circlePadding = circlePadding;
-  }
-
-  /**
-   * @return the fillColor
-   */
-  public int getFillColor() {
-    return fillColor;
-  }
-
-  /**
-   * @param fillColor the fillColor to set
-   */
-  public void setFillColor(int fillColor) {
-    this.fillColor = fillColor;
-    mPaintFill.setColor(fillColor);
-  }
-
-  public void setPageColor(int pageColor) {
-    this.pageColor = pageColor;
-    mPaintPage.setColor(pageColor);
-  }
-
-  /**
-   * @return the realCurrentItem
-   */
-  public int getRealCurrentItem() {
-    return realCurrentItem;
-  }
-
-  /**
-   * @param realCurrentItem the realCurrentItem to set
-   */
-  public void setRealCurrentItem(int realCurrentItem) {
-    this.realCurrentItem = realCurrentItem;
-  }
-
-  //	/**
-  //	 * @return the strokeColor
-  //	 */
-  //	public int getStrokeColor() {
-  //		return strokeColor;
-  //	}
-  //
-  //	/**
-  //	 * @param strokeColor the strokeColor to set
-  //	 */
-  //	public void setStrokeColor(int strokeColor) {
-  //		this.strokeColor = strokeColor;
-  //	}
-  //
-  //	/**
-  //	 * @return the strokeWidth
-  //	 */
-  //	public float getStrokeWidth() {
-  //		return strokeWidth;
-  //	}
-  //
-  //	/**
-  //	 * @param strokeWidth the strokeWidth to set
-  //	 */
-  //	public void setStrokeWidth(float strokeWidth) {
-  //		this.strokeWidth = strokeWidth;
-  //	}
-
-  @Override
-  public void registerGestureListener(WXGesture wxGesture) {
-    this.wxGesture = wxGesture;
-  }
-
-  @Override
-  public boolean onTouchEvent(MotionEvent event) {
-    boolean result = super.onTouchEvent(event);
-    if (wxGesture != null) {
-      result |= wxGesture.onTouch(this, event);
-    }
-    return result;
-  }
-
-  @Override
-  protected void onDraw(Canvas canvas) {
-    // TODO Auto-generated method stub
-    super.onDraw(canvas);
-
-    float firstX = getWidth() / 2 + getPaddingLeft() - getCount() / 2.0f * (radius + circlePadding);// + radius;
-    float firstY = getHeight() / 2 + getPaddingTop();// + radius;
-
-    //draw stroked circles
-    for (int i = 0; i < getCount(); i++) {
-      float dx = firstX + circlePadding * i + radius * 2 * i;
-      float dy = firstY;
-      if (mPaintStroke.getStrokeWidth() > 0) {
-        canvas.drawCircle(dx, dy, radius, mPaintStroke);
-      }
-
-      if (mPaintPage.getAlpha() > 0) {
-        canvas.drawCircle(dx, dy, radius, mPaintPage);
-      }
+    public LoopViewPager(Context context) {
+        super(context);
+        init();
     }
 
-    //Draw the filled circle
-    float dx = firstX + realCurrentItem * circlePadding + radius * 2 * realCurrentItem;
-    float dy = firstY;
-    canvas.drawCircle(dx, dy, radius, mPaintFill);
-  }
-
-  @Override
-  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-
-    int viewWidth;
-    int viewHeight;
-
-    int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-    int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-    int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-    int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-
-    if (widthMode == MeasureSpec.EXACTLY) {
-      viewWidth = widthSize;
-    } else {
-      viewWidth = (int) (getPaddingLeft() + radius * 2 * getCount() + circlePadding * (getCount() - 1) + getPaddingRight()) + 1;
+    public LoopViewPager(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
     }
 
-    if (heightMode == MeasureSpec.EXACTLY) {
-      viewHeight = heightSize;
-    } else {
-      viewHeight = (int) (getPaddingTop() + radius * 2 + getPaddingBottom()) + 1;
-    }
-    setMeasuredDimension(viewWidth, viewHeight);
-  }
+    private void init() {
+        setOverScrollMode(View.OVER_SCROLL_NEVER);
 
-  /**
-   * @return the count
-   */
-  public int getCount() {
-    if (mCircleViewPager == null || mCircleViewPager.getAdapter() == null) {
-      return 0;
+        addOnPageChangeListener(new OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (isAutoScroll()) {
+                    removeCallbacks(scrollAction);
+                    postDelayed(scrollAction, intervalTime);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                LoopPagerAdapter adapter = (LoopPagerAdapter) getAdapter();
+                int currentItemInternal = LoopViewPager.super.getCurrentItem();
+                if (mLoop && state == ViewPager.SCROLL_STATE_IDLE && adapter.getCount() > 1) {
+                    if (currentItemInternal == adapter.getCount() - 1) {
+                        LoopViewPager.super.setCurrentItem(1, false);
+                    } else if (currentItemInternal == 0) {
+                        LoopViewPager.super.setCurrentItem(adapter.getCount() - 2, false);
+                    }
+                }
+            }
+        });
+
+        postInitViewPager();
     }
-    return ((LoopPagerAdapter)mCircleViewPager.getAdapter()).getRealCount();
-  }
+
+    /**
+     * Override the Scroller instance with our own class so we can change the
+     * duration
+     */
+    private void postInitViewPager() {
+        if (isInEditMode()) {
+            return;
+        }
+        try {
+            Field scroller = ViewPager.class.getDeclaredField("mScroller");
+            scroller.setAccessible(true);
+            Field interpolator = ViewPager.class
+                    .getDeclaredField("sInterpolator");
+            interpolator.setAccessible(true);
+
+            mScroller = new WXSmoothScroller(getContext(),
+                    (Interpolator) interpolator.get(null));
+            scroller.set(this, mScroller);
+        } catch (Exception e) {
+            WXLogUtils.e("[CircleViewPager] postInitViewPager: ", e);
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_MOVE:
+                removeCallbacks(scrollAction);
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                if (isAutoScroll()) {
+                    postDelayed(scrollAction, intervalTime);
+                }
+                break;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        boolean result = super.onTouchEvent(ev);
+        if (wxGesture != null) {
+            result |= wxGesture.onTouch(this, ev);
+        }
+        return result;
+    }
+
+    @Override
+    public void registerGestureListener(@Nullable WXGesture wxGesture) {
+        this.wxGesture = wxGesture;
+    }
+
+    @Override
+    public int getCurrentItem() {
+        return getRealCurrentItem();
+    }
+
+    @Override
+    public void setCurrentItem(int item) {
+        setRealCurrentItem(item);
+    }
+
+    public void setIntervalTime(long time) {
+        intervalTime = time;
+    }
+
+    public void destory() {
+
+    }
+
+    public void startAutoScroll() {
+        mAutoScroll = true;
+        removeCallbacks(scrollAction);
+        postDelayed(scrollAction, intervalTime);
+    }
+
+    public void stopAutoScroll() {
+        mAutoScroll = false;
+        removeCallbacks(scrollAction);
+    }
+
+    public boolean isAutoScroll() {
+        return mAutoScroll;
+    }
+
+    public void setCircle(boolean circle) {
+        mLoop = circle;
+    }
+
+    private int getRealCurrentItem() {
+        int i = getCurrentItem();
+        return ((LoopPagerAdapter) getAdapter()).getRealPosition(i);
+    }
+
+    private void setRealCurrentItem(int item) {
+        super.setCurrentItem(((LoopPagerAdapter) getAdapter()).getFirst() + item);
+    }
 }

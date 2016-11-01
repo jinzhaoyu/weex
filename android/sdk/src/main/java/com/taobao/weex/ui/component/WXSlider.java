@@ -221,9 +221,9 @@ import com.taobao.weex.common.Constants;
 import com.taobao.weex.dom.WXDomObject;
 import com.taobao.weex.dom.WXEvent;
 import com.taobao.weex.ui.ComponentCreator;
+import com.taobao.weex.ui.view.LoopPagerAdapter;
+import com.taobao.weex.ui.view.LoopViewPager;
 import com.taobao.weex.ui.view.WXCircleIndicator;
-import com.taobao.weex.ui.view.WXCirclePageAdapter;
-import com.taobao.weex.ui.view.WXCircleViewPager;
 import com.taobao.weex.utils.WXLogUtils;
 import com.taobao.weex.utils.WXUtils;
 import com.taobao.weex.utils.WXViewUtils;
@@ -247,7 +247,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
   /**
    * Scrollable sliderview
    */
-  /** package **/ WXCircleViewPager mViewPager;
+  /** package **/ LoopViewPager mViewPager;
   /**
    * Circle indicator
    */
@@ -256,7 +256,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
   /**
    * Adapter for sliderview
    */
-  protected WXCirclePageAdapter mAdapter;
+  protected LoopPagerAdapter mAdapter;
 
   protected boolean mShowIndicators;
 
@@ -277,11 +277,11 @@ public class WXSlider extends WXVContainer<FrameLayout> {
     // init view pager
     FrameLayout.LayoutParams pagerParams = new FrameLayout.LayoutParams(
          LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-    mViewPager = new WXCircleViewPager(context);
+    mViewPager = new LoopViewPager(context);
     mViewPager.setLayoutParams(pagerParams);
 
     // init adapter
-    mAdapter = new WXCirclePageAdapter();
+    mAdapter = new LoopPagerAdapter();
     mViewPager.setAdapter(mAdapter);
     // add to parent
     view.addView(mViewPager);
@@ -317,7 +317,7 @@ public class WXSlider extends WXVContainer<FrameLayout> {
       return;
     }
     mAdapter.addPageView(view);
-    mAdapter.notifyDataSetChanged();
+    mViewPager.setCurrentItem(0);
     if (mIndicator != null) {
       mIndicator.getHostView().forceLayout();
       mIndicator.getHostView().requestLayout();
