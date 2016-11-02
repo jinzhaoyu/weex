@@ -341,7 +341,7 @@ public class WXSDKEngine {
       registerModule("storage", WXStorageModule.class, true);
       registerModule("clipboard", WXClipboardModule.class, true);
       registerModule("globalEvent",WXGlobalEventModule.class);
-      registerModule("pickers", WXPickersModule.class);
+      registerModule("picker", WXPickersModule.class);
 
       registerDomObject(WXBasicComponentType.INDICATOR, WXIndicator.IndicatorDomNode.class);
       registerDomObject(WXBasicComponentType.TEXT, WXTextDomObject.class);
