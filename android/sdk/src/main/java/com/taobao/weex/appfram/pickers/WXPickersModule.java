@@ -251,28 +251,4 @@ public class WXPickersModule extends WXModule {
                 })
                 .show();
     }
-
-    //TODO: multi select support
-    private void performMultiPick(List<String> items, int[] checked, final JSCallback callback) {
-        new AlertDialog.Builder(mWXSDKInstance.getContext())
-                .setMultiChoiceItems(items.toArray(new String[items.size()]), null, new DialogInterface.OnMultiChoiceClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                })
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                })
-                .show();
-    }
 }
