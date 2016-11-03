@@ -202,371 +202,53 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.taobao.weex.ui;
+package com.taobao.weex.appfram.pickers;
 
-import android.graphics.Color;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.FrameLayout;
-import android.widget.ScrollView;
+import android.content.DialogInterface;
+import android.support.v7.app.AlertDialog;
 
-import com.alibaba.fastjson.JSONObject;
-import com.taobao.weex.WXEnvironment;
-import com.taobao.weex.WXSDKInstance;
-import com.taobao.weex.common.WXRenderStrategy;
-import com.taobao.weex.dom.WXDomObject;
-import com.taobao.weex.dom.flex.Spacing;
-import com.taobao.weex.ui.animation.WXAnimationBean;
-import com.taobao.weex.ui.animation.WXAnimationModule;
-import com.taobao.weex.ui.component.Scrollable;
-import com.taobao.weex.ui.component.WXComponent;
-import com.taobao.weex.ui.component.WXComponentFactory;
-import com.taobao.weex.ui.component.WXScroller;
-import com.taobao.weex.ui.component.WXVContainer;
-import com.taobao.weex.utils.WXLogUtils;
-import com.taobao.weex.utils.WXViewUtils;
+import com.taobao.weex.bridge.JSCallback;
+import com.taobao.weex.common.WXModule;
+import com.taobao.weex.common.WXModuleAnno;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
- * Class for rendering view. Method in this class should be run in main thread.
- * This class is also <strong>not</storng> thread safe.
- * This class is very similar to {@link com.taobao.weex.dom.WXDomStatement}
- * @see com.taobao.weex.dom.WXDomStatement
+ * Created by moxun on 16/10/27.
  */
-class WXRenderStatement {
 
-  private Map<String, WXComponent> mRegistry;
-  private WXSDKInstance mWXSDKInstance;
-  /**
-   * The container for weex root view.
-   */
-  private WXVContainer mGodComponent;
+public class WXPickersModule extends WXModule {
 
-  public WXRenderStatement(WXSDKInstance instance) {
-    mWXSDKInstance = instance;
-    mRegistry = new HashMap<>();
-  }
+    private int selected;
 
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#destroy()
-   */
-  public void destroy() {
-    mWXSDKInstance = null;
-    if (mGodComponent != null) {
-      mGodComponent.destroy();
-    }
-    mRegistry.clear();
-  }
-
-  public WXSDKInstance getWXSDKInstance() {
-    return mWXSDKInstance;
-  }
-
-  /**
-   * create RootView ，every weex Instance View has a rootView;
-   * @see com.taobao.weex.dom.WXDomStatement#createBody(JSONObject)
-   */
-  void createBody(WXComponent component) {
-    long start = System.currentTimeMillis();
-    component.createView(mGodComponent, -1);
-    if (WXEnvironment.isApkDebugable()) {
-      WXLogUtils.renderPerformanceLog("createView", (System.currentTimeMillis() - start));
-    }
-    start = System.currentTimeMillis();
-    component.applyLayoutAndEvent(component);
-    component.bindData(component);
-
-    if (WXEnvironment.isApkDebugable()) {
-      WXLogUtils.renderPerformanceLog("bind", (System.currentTimeMillis() - start));
+    @WXModuleAnno
+    public void pick(List<String> items, int checked, JSCallback callback) {
+        performSinglePick(items, checked, callback);
     }
 
-    if (component instanceof WXScroller) {
-      WXScroller scroller = (WXScroller) component;
-      if (scroller.getInnerView() instanceof ScrollView) {
-        mWXSDKInstance.setRootScrollView((ScrollView) scroller.getInnerView());
-      }
+    private void performSinglePick(List<String> items, int checked, final JSCallback callback) {
+        selected = checked;
+        new AlertDialog.Builder(mWXSDKInstance.getContext())
+                .setSingleChoiceItems(items.toArray(new String[items.size()]), checked, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        selected = which;
+                    }
+                })
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //which == -1
+                        callback.invoke(selected);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //which == -2
+                        callback.invoke(-1);
+                    }
+                })
+                .show();
     }
-    mWXSDKInstance.setRootView(mGodComponent.getRealView());
-    if (mWXSDKInstance.getRenderStrategy() != WXRenderStrategy.APPEND_ONCE) {
-      mWXSDKInstance.onViewCreated(mGodComponent);
-    }
-  }
-
-  WXComponent createBodyOnDomThread(WXDomObject dom) {
-    if (mWXSDKInstance == null) {
-      return null;
-    }
-    WXDomObject domObject = new WXDomObject();
-    WXDomObject.prepareGod(domObject);
-    mGodComponent = (WXVContainer) WXComponentFactory.newInstance(mWXSDKInstance, domObject, null);
-    mGodComponent.createView(null, -1);
-    if (mGodComponent == null) {
-      if (WXEnvironment.isApkDebugable()) {
-        WXLogUtils.e("rootView failed!");
-      }
-      //TODO error callback
-      return null;
-    }
-    FrameLayout frameLayout = (FrameLayout) mGodComponent.getHostView();
-    ViewGroup.LayoutParams layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    frameLayout.setLayoutParams(layoutParams);
-    frameLayout.setBackgroundColor(Color.TRANSPARENT);
-
-    mGodComponent.getRealView().addOnLayoutChangeListener(getWXSDKInstance());
-    WXComponent component = generateComponentTree(dom, mGodComponent);
-    mGodComponent.addChild(component);
-    mRegistry.put(component.getRef(), component);
-    return component;
-  }
-
-  /**
-   * set padding style of View
-   */
-  void setPadding(String ref, Spacing padding, Spacing border) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-    component.setPadding(padding, border);
-  }
-
-  /**
-   * set layout information of View
-   */
-  void setLayout(String ref, WXDomObject domObject) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-    component.setLayout(domObject);
-  }
-
-  /**
-   * set extra information of View
-   */
-  void setExtra(String ref, Object extra) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-    component.updateExtra(extra);
-  }
-
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#addDom(JSONObject, String, int)
-   */
-  void addComponent(WXDomObject dom, String parentRef, int index) {
-    WXVContainer parent = (WXVContainer) mRegistry.get(parentRef);
-    WXComponent component = generateComponentTree(dom, parent);
-    parent.addChild(component, index);
-  }
-
-  @Nullable WXComponent createComponentOnDomThread(WXDomObject dom, String parentRef, int index) {
-    WXComponent comp = mRegistry.get(parentRef);
-    if(comp == null || !(comp instanceof WXVContainer)){
-      return null;
-    }
-    return generateComponentTree(dom, (WXVContainer) mRegistry.get(parentRef));
-  }
-
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#addDom(JSONObject, String, int)
-   */
-  void addComponent(WXComponent component, String parentRef, int index) {
-    WXVContainer parent = (WXVContainer) mRegistry.get(parentRef);
-    if (parent == null || component == null) {
-      return;
-    }
-    
-    parent.addChild(component, index);
-    component.createView(parent, index);
-    component.applyLayoutAndEvent(component);
-    component.bindData(component);
-  }
-
-  /**
-   *@see com.taobao.weex.dom.WXDomStatement#removeDom(String)
-   */
-  WXComponent removeComponent(String ref) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null || component.getParent() == null) {
-      return component;
-    }
-    WXVContainer parent = component.getParent();
-    clearRegistryForComponent(component);
-    parent.remove(component);
-    mRegistry.remove(ref);
-    return component;
-  }
-
-  public WXComponent getComponent(String ref) {
-    return mRegistry.get(ref);
-  }
-
-  /**
-   * Clear registry information that current instance contains.
-   */
-  private void clearRegistryForComponent(WXComponent component) {
-    WXComponent removedComponent = mRegistry.remove(component.getDomObject().getRef());
-    if (removedComponent != null) {
-      removedComponent.removeAllEvent();
-      removedComponent.removeStickyStyle();
-    }
-    if (component instanceof WXVContainer) {
-      WXVContainer container = (WXVContainer) component;
-      int count = container.childCount();
-      for (int i = count - 1; i >= 0; --i) {
-        clearRegistryForComponent(container.getChild(i));
-      }
-    }
-
-  }
-
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#moveDom(String, String, int)
-   */
-  void move(String ref, String parentRef, int index) {
-    WXComponent component = mRegistry.get(ref);
-    WXComponent newParent = mRegistry.get(parentRef);
-    if (component == null || component.getParent() == null
-        || newParent == null || !(newParent instanceof WXVContainer)) {
-      return;
-    }
-    WXVContainer oldParent = component.getParent();
-    oldParent.remove(component,false);
-    ((WXVContainer) newParent).addChild(component, index);
-  }
-
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#addEvent(String, String)
-   */
-  void addEvent(String ref, String type) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-    component.addEvent(type);
-  }
-
-  /**
-   * @see WXDomObject#removeEvent(String)
-   */
-  void removeEvent(String ref, String type) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-    component.removeEvent(type);
-  }
-
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#updateAttrs(String, JSONObject)
-   */
-  void updateAttrs(String ref, Map<String, Object> attrs) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-
-    component.updateProperties(attrs);
-  }
-
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#updateStyle(String, JSONObject)
-   */
-  void updateStyle(String ref, Map<String, Object> style) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-
-    component.updateProperties(style);
-  }
-
-  /**
-   * @see com.taobao.weex.dom.WXDomStatement#scrollToDom(String, JSONObject)
-   */
-  void scrollTo(String ref, Map<String, Object> options) {
-    WXComponent component = mRegistry.get(ref);
-    if (component == null) {
-      return;
-    }
-
-    float offsetFloat = 0;
-    if (options != null) {
-      String offset = options.get("offset") == null ? "0" : options.get("offset").toString();
-      if (offset != null) {
-        try {
-          offsetFloat = WXViewUtils.getRealPxByWidth(Float.parseFloat(offset));
-        }catch (Exception e ){
-           WXLogUtils.e("Float parseFloat error :"+e.getMessage());
-        }
-      }
-    }
-
-    Scrollable scroller = component.getParentScroller();
-    if (scroller == null) {
-      return;
-    }
-    scroller.scrollTo(component,(int)offsetFloat);
-  }
-
-  /**
-   * weex render finish
-   * @see  com.taobao.weex.dom.WXDomStatement#createFinish()
-   */
-  void createFinish(int width, int height) {
-    if (mWXSDKInstance.getRenderStrategy() == WXRenderStrategy.APPEND_ONCE) {
-      mWXSDKInstance.onViewCreated(mGodComponent);
-    }
-    mWXSDKInstance.onRenderSuccess(width, height);
-  }
-
-  /**
-   * weex refresh finish
-   * @see com.taobao.weex.dom.WXDomStatement#refreshFinish()
-   */
-  void refreshFinish(int width, int height) {
-    mWXSDKInstance.onRefreshSuccess(width, height);
-  }
-
-  /**
-   * weex refresh finish
-   * @see WXSDKInstance#onUpdateFinish()
-   */
-  void updateFinish() {
-    mWXSDKInstance.onUpdateFinish();
-  }
-
-
-  private WXComponent generateComponentTree(WXDomObject dom, WXVContainer parent) {
-    if (dom == null || parent == null) {
-      return null;
-    }
-    WXComponent component = WXComponentFactory.newInstance(mWXSDKInstance, dom,
-                                                           parent);
-
-    mRegistry.put(dom.getRef(), component);
-    if (component instanceof WXVContainer) {
-      WXVContainer parentC = (WXVContainer) component;
-      int count = dom.childCount();
-      WXDomObject child = null;
-      for (int i = 0; i < count; ++i) {
-        child = dom.getChild(i);
-        if (child != null) {
-          parentC.addChild(generateComponentTree(child, parentC));
-        }
-      }
-    }
-
-    return component;
-  }
-
-  void startAnimation(@NonNull String ref, @NonNull WXAnimationBean animationBean, @Nullable String callBack) {
-    WXAnimationModule.startAnimation(mWXSDKInstance, mRegistry.get(ref), animationBean, callBack);
-  }
 }
