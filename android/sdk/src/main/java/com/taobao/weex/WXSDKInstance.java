@@ -242,6 +242,7 @@ import com.taobao.weex.utils.WXLogUtils;
 import com.taobao.weex.utils.WXReflectionUtils;
 import com.taobao.weex.utils.WXViewUtils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -270,6 +271,7 @@ public class WXSDKInstance implements IWXActivityStateListener {
   private NestedInstanceInterceptor mNestedInstanceInterceptor;
   private String mBundleUrl = "";
   private boolean isDestroy=false;
+  private Map<String,Serializable> mUserTrackParams;
 
   /**
    * Render strategy.
@@ -782,7 +784,7 @@ public class WXSDKInstance implements IWXActivityStateListener {
               WXLogUtils.d(WXLogUtils.WEEX_PERF_TAG, mWXPerformance.toString());
             }
             if (mUserTrackAdapter != null) {
-              mUserTrackAdapter.commit(mContext, null, IWXUserTrackAdapter.LOAD, mWXPerformance, null);
+              mUserTrackAdapter.commit(mContext, null, IWXUserTrackAdapter.LOAD, mWXPerformance, getUserTrackParams());
               commitUTStab(IWXUserTrackAdapter.JS_BRIDGE,WXErrorCode.WX_SUCCESS);
             }
           }
@@ -913,7 +915,7 @@ public class WXSDKInstance implements IWXActivityStateListener {
           }
         }
         if( mUserTrackAdapter!= null) {
-          mUserTrackAdapter.commit(mContext, null, type, performance, null);
+          mUserTrackAdapter.commit(mContext, null, type, performance, getUserTrackParams());
         }
       }
     });
@@ -1109,9 +1111,17 @@ public class WXSDKInstance implements IWXActivityStateListener {
     mGlobalEvents.remove(eventName);
   }
 
-    /**
-     * load bundle js listener
-     */
+  public Map<String, Serializable> getUserTrackParams() {
+    return mUserTrackParams;
+  }
+
+  public void setUserTrackParams(Map<String, Serializable> userTrackParams) {
+    this.mUserTrackParams = userTrackParams;
+  }
+
+  /**
+   * load bundle js listener
+   */
   class WXHttpListener implements IWXHttpAdapter.OnHttpListener {
 
     private String pageName;
