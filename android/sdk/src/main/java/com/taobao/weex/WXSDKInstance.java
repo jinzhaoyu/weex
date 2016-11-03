@@ -247,6 +247,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
@@ -1115,8 +1116,23 @@ public class WXSDKInstance implements IWXActivityStateListener {
     return mUserTrackParams;
   }
 
-  public void setUserTrackParams(Map<String, Serializable> userTrackParams) {
-    this.mUserTrackParams = userTrackParams;
+  public void addUserTrackParameter(String key,Serializable value){
+    if(this.mUserTrackParams == null){
+      this.mUserTrackParams = new ConcurrentHashMap<>();
+    }
+    mUserTrackParams.put(key,value);
+  }
+
+  public void clearUserTrackParameters(){
+    if(this.mUserTrackParams != null){
+      this.mUserTrackParams.clear();
+    }
+  }
+
+  public void removeUserTrackParameter(String key){
+    if(this.mUserTrackParams != null){
+      this.mUserTrackParams.remove(key);
+    }
   }
 
   /**
